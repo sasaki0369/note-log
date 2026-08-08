@@ -507,31 +507,70 @@ document.getElementById('openImport').addEventListener('click', () => {
   document.getElementById('importBackdrop').classList.add('open');
 });
 
+const IMPORT_BATCH_SIZE = 8;
+
+function chunk(arr, size){
+  const out = [];
+  for(let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
+  return out;
+}
+
 document.getElementById('runImportBtn').addEventListener('click', async () => {
+  const runBtn = document.getElementById('runImportBtn');
+  const resultEl = document.getElementById('importResult');
   const text = document.getElementById('importText').value;
   const parsed = parseRaw(text).filter(p => p.title && /^\d{8}$/.test(p.date));
   if(parsed.length === 0){
-    document.getElementById('importResult').textContent = '記事の区切りを検出できませんでした。「yyyymmdd_タイトル」形式の行があるかご確認ください。';
+    resultEl.textContent = '記事の区切りを検出できませんでした。「yyyymmdd_タイトル」形式の行があるかご確認ください。';
     return;
   }
-  let added = 0, updated = 0;
-  const updates = {};
-  for(const p of parsed){
+
+  // Build the list of writes up front (id decided per record), then send in small batches
+  // so one large multi-path update doesn't fail as a single all-or-nothing operation.
+  const jobs = parsed.map(p => {
     const existing = records.find(r => r.date === p.date && r.title === p.title);
-    if(existing){
-      updates[existing.id] = {date: p.date, title: p.title, body: p.body};
-      updated++;
-    }else{
-      const key = recordsRef.push().key;
-      updates[key] = {date: p.date, title: p.title, body: p.body};
-      added++;
+    return {
+      id: existing ? existing.id : recordsRef.push().key,
+      isNew: !existing,
+      data: {date: p.date, title: p.title, body: p.body}
+    };
+  });
+
+  const batches = chunk(jobs, IMPORT_BATCH_SIZE);
+  let added = 0, updated = 0, failed = 0;
+  let lastError = '';
+
+  runBtn.disabled = true;
+  for(let i = 0; i < batches.length; i++){
+    const batch = batches[i];
+    resultEl.textContent = `取り込み中… ${i * IMPORT_BATCH_SIZE}/${jobs.length} 件`;
+    const updates = {};
+    batch.forEach(j => { updates[j.id] = j.data; });
+    try{
+      await recordsRef.update(updates);
+      batch.forEach(j => j.isNew ? added++ : updated++);
+    }catch(e){
+      console.error('バッチ書き込み失敗、1件ずつ再試行します', e);
+      // Fall back to writing this batch one record at a time so a single
+      // oversized or problematic record doesn't block the rest.
+      for(const j of batch){
+        try{
+          await recordsRef.child(j.id).set(j.data);
+          j.isNew ? added++ : updated++;
+        }catch(e2){
+          failed++;
+          lastError = (e2 && e2.message) ? e2.message : String(e2);
+          console.error('個別書き込み失敗', j, e2);
+        }
+      }
     }
   }
-  try{
-    await recordsRef.update(updates);
-    document.getElementById('importResult').textContent = `取り込み完了：新規 ${added} 件、更新 ${updated} 件`;
-  }catch(e){
-    document.getElementById('importResult').textContent = '取り込みに失敗しました。通信状態をご確認ください。';
+  runBtn.disabled = false;
+
+  if(failed === 0){
+    resultEl.textContent = `取り込み完了：新規 ${added} 件、更新 ${updated} 件`;
+  }else{
+    resultEl.textContent = `完了（一部失敗）：新規 ${added} 件、更新 ${updated} 件、失敗 ${failed} 件　最後のエラー: ${lastError}`;
     setSyncState('err');
   }
 });
