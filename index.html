@@ -251,7 +251,6 @@
     <span class="spacer"></span>
     <span class="count-tag" id="countTag"></span>
     <button class="btn btn-ghost" id="openStats">集計</button>
-    <button class="btn btn-ghost" id="openImport">取り込み</button>
     <button class="btn btn-ghost" id="openSettings">設定</button>
     <button class="btn btn-primary" id="openNew">＋ 新規記事</button>
   </div>
@@ -354,11 +353,14 @@
     <div class="field">
       <label>イラストプロンプト</label>
       <textarea id="settingsIllustPrompt" rows="6"></textarea>
+      <button class="btn btn-ghost" id="resetIllustPromptBtn" style="width:100%;margin-top:8px;">デフォルトに戻す</button>
+    </div>
+    <div class="field" style="border-top:1px dashed var(--line);padding-top:16px;">
+      <label>データ管理</label>
+      <button class="btn btn-ghost" id="openImport" style="width:100%;">過去ログを取り込み</button>
     </div>
     <div class="import-result" id="settingsResult"></div>
     <div class="modal-actions">
-      <button class="btn btn-ghost" id="resetIllustPromptBtn">デフォルトに戻す</button>
-      <span class="spacer"></span>
       <button class="btn btn-ghost" data-close="settings">キャンセル</button>
       <button class="btn btn-primary" id="saveSettingsBtn">保存する</button>
     </div>
@@ -669,6 +671,7 @@ document.getElementById('saveEditBtn').addEventListener('click', async () => {
 });
 
 document.getElementById('openImport').addEventListener('click', () => {
+  closeModal('settings');
   document.getElementById('importText').value = '';
   document.getElementById('importResult').textContent = '';
   document.getElementById('importBackdrop').classList.add('open');
