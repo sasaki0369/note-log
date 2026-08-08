@@ -4,6 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>noteろぐ</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#2C4634">
+<link rel="icon" href="icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="noteろぐ">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Zen+Old+Mincho:wght@500;700&family=Zen+Maru+Gothic:wght@400;500;700&family=Shippori+Mincho:wght@600&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -557,6 +563,12 @@ recordsRef.on('value', snap => {
     setSyncState('err');
   }
 })();
+
+if('serviceWorker' in navigator){
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch((e) => console.warn('SW登録失敗', e));
+  });
+}
 </script>
 </body>
 </html>
