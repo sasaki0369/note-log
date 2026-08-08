@@ -210,6 +210,10 @@
     border-top:1px dashed var(--line);padding-top:16px;margin-top:4px;
   }
   .modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:20px;}
+  .detail-actions{
+    display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:20px;
+  }
+  .detail-actions .btn{width:100%;}
   .meta-line{font-size:12.5px;color:var(--ink-soft);margin-bottom:16px;}
 
   .import-help{
@@ -263,10 +267,11 @@
     <h2><span class="stamp" id="detailStamp" style="width:36px;height:36px;font-size:13px;">1</span><span id="detailTitle"></span></h2>
     <div class="meta-line" id="detailMeta"></div>
     <div class="modal-body-view" id="detailBody"></div>
-    <div class="modal-actions">
+    <div class="detail-actions">
+      <button class="btn btn-ghost" id="editBtn">編集</button>
+      <button class="btn btn-ghost" id="copyIllustBtn">イラストプロンプト</button>
       <button class="btn btn-ghost" id="copyTitleBtn">タイトルコピー</button>
       <button class="btn btn-ghost" id="copyBodyBtn">本文コピー</button>
-      <button class="btn btn-ghost" id="editBtn">編集</button>
     </div>
   </div>
 </div>
@@ -567,6 +572,15 @@ document.getElementById('copyBodyBtn').addEventListener('click', () => {
   const r = records.find(x => x.id === activeDetailId);
   if(!r) return;
   copyToClipboard(r.body, document.getElementById('copyBodyBtn'));
+});
+
+const ILLUST_PROMPT = '以下の文章に合うイラストを横長（1280×670px）で作成ください。なお、文章において特に印象的なシーンに絞り、文字はなくイラストのみでお願いします。';
+
+document.getElementById('copyIllustBtn').addEventListener('click', () => {
+  const r = records.find(x => x.id === activeDetailId);
+  if(!r) return;
+  const text = `${ILLUST_PROMPT}\n\n${r.body}`;
+  copyToClipboard(text, document.getElementById('copyIllustBtn'));
 });
 
 document.getElementById('deleteBtn').addEventListener('click', async () => {
