@@ -358,12 +358,15 @@ function renumber(list){
   return list;
 }
 
-function setSyncState(state){
+function setSyncState(state, detail){
   const dot = document.getElementById('syncDot');
   const label = document.getElementById('syncLabel');
   dot.classList.remove('on','err');
   if(state === 'on'){ dot.classList.add('on'); label.textContent = 'Firebase 同期中'; }
-  else if(state === 'err'){ dot.classList.add('err'); label.textContent = '同期エラー'; }
+  else if(state === 'err'){
+    dot.classList.add('err');
+    label.textContent = detail ? `同期エラー: ${detail}` : '同期エラー';
+  }
   else { label.textContent = '接続中…'; }
 }
 
@@ -590,8 +593,8 @@ recordsRef.on('value', snap => {
   setSyncState('on');
   render();
 }, err => {
-  console.error(err);
-  setSyncState('err');
+  console.error('recordsRef.on value error', err);
+  setSyncState('err', (err && (err.code || err.message)) || '不明なエラー');
 });
 
 (async function init(){
@@ -599,7 +602,7 @@ recordsRef.on('value', snap => {
     await seedIfEmpty();
   }catch(e){
     console.error('seed failed', e);
-    setSyncState('err');
+    setSyncState('err', (e && (e.code || e.message)) || '不明なエラー');
   }
 })();
 
