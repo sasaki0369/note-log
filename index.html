@@ -840,6 +840,14 @@ function ensureAuth(){
 })();
 
 if('serviceWorker' in navigator){
+  let reloading = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    // A newer service worker just took over — reload once so the page
+    // (and its cached assets) picks up the latest deployed version.
+    if(reloading) return;
+    reloading = true;
+    window.location.reload();
+  });
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('sw.js').catch((e) => console.warn('SW登録失敗', e));
   });
