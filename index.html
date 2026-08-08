@@ -14,6 +14,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Zen+Old+Mincho:wght@500;700&family=Zen+Maru+Gothic:wght@400;500;700&family=Shippori+Mincho:wght@600&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 <style>
   :root{
     --paper:#F6F1E6;
@@ -588,20 +589,35 @@ document.querySelectorAll('.modal-backdrop').forEach(bd => {
 document.getElementById('searchBox').addEventListener('input', render);
 document.getElementById('yearFilter').addEventListener('change', render);
 
-recordsRef.on('value', snap => {
-  records = renumber(objectToArray(snap.val()));
-  setSyncState('on');
-  render();
-}, err => {
-  console.error('recordsRef.on value error', err);
-  setSyncState('err', (err && (err.code || err.message)) || '不明なエラー');
-});
+function ensureAuth(){
+  return new Promise((resolve, reject) => {
+    const unsub = firebase.auth().onAuthStateChanged(user => {
+      if(user){
+        unsub();
+        resolve(user);
+      }
+    }, reject);
+    firebase.auth().signInAnonymously().catch(reject);
+  });
+}
 
 (async function init(){
   try{
+    setSyncState('connecting');
+    await ensureAuth();
+
+    recordsRef.on('value', snap => {
+      records = renumber(objectToArray(snap.val()));
+      setSyncState('on');
+      render();
+    }, err => {
+      console.error('recordsRef.on value error', err);
+      setSyncState('err', (err && (err.code || err.message)) || '不明なエラー');
+    });
+
     await seedIfEmpty();
   }catch(e){
-    console.error('seed failed', e);
+    console.error('init failed', e);
     setSyncState('err', (e && (e.code || e.message)) || '不明なエラー');
   }
 })();
