@@ -6,6 +6,8 @@
 <title>noteろぐ</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Zen+Old+Mincho:wght@500;700&family=Zen+Maru+Gothic:wght@400;500;700&family=Shippori+Mincho:wght@600&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 <style>
   :root{
     --paper:#F6F1E6;
@@ -62,6 +64,13 @@
     transform:rotate(-8deg);
   }
   .tagline{color:var(--ink-soft);font-size:14.5px;line-height:1.8;max-width:52ch;}
+  .sync-state{
+    display:inline-flex;align-items:center;gap:6px;
+    font-size:11.5px;color:var(--ink-soft);margin-top:10px;
+  }
+  .sync-dot{width:7px;height:7px;border-radius:50%;background:#b7ac91;}
+  .sync-dot.on{background:var(--moss);}
+  .sync-dot.err{background:var(--thread);}
 
   main{max-width:920px;margin:0 auto;padding:0 28px 0 52px;}
 
@@ -196,6 +205,7 @@
   <div class="eyebrow">Personal Note Archive</div>
   <h1><span class="stamp-mini" id="headerCount">0</span>noteろぐ</h1>
   <p class="tagline">週次で書き綴ってきた note の記事を、日付・タイトルを分けて一件ずつ記録していくログ帳です。</p>
+  <div class="sync-state"><span class="sync-dot" id="syncDot"></span><span id="syncLabel">接続中…</span></div>
 </header>
 
 <main>
@@ -276,11 +286,21 @@
 <script>
 const SEED_DATA = [{"date": "20260607", "title": "すごい娘", "body": "長女が3週間の教育実習を終えました。\n小学3年生を受け持たせてもらい、授業をするのはもちろん、その準備のために先生方の指導を受けたり、休み時間に子どもたちと遊んだり、、、最後は「研究授業」という（だったかな汗）多くの先生方の見る前で授業を行いコメントをもらう、という経験まで積んできました。\n\nそんな娘の話をときおり聞いていて、いろいろと「すごい」と感じたので、備忘の意味も含めて記録しておこうと思います。\n\nすごい①　事前準備\n毎日の授業に向けて家に帰ってきてから真剣に準備しています。\nその準備は、通り一遍のものでなく、「あの子にはこの伝え方で伝わるかな」と一人一人の顔を思い浮かべながら指導方法を考えているのです。\n僕のように、日々行き当たりばったりで仕事をしている人間からすると、想像を絶する準備です。\n\nすごい②　生活習慣\nもともと、娘はそんなに生活習慣が良い方ではありません。\nNetflixを見たり、ゲームをしたりして夜更かしすることもしばしば。\nですが、この期間は「意識高い系」の生活習慣だったように思います。\n授業の準備を終えたら23時には就寝し、朝6時頃から準備をして出ていく。\nやればできるんですね。\n\nすごい③　先生方との交流\nある夜、普段は20時には帰ってくる娘が21時を過ぎても帰ってこないので妻が心配し始めました。\n結局、22時くらいに帰ってきたのですが、聞くと、「先生たちとバドミントンしてきた」と。\n飲みにでも行っているのかと思いきや、なんて健康的！\n娘は高校の途中までバドミントンをやっていたのもあり、仲間に入れてもらったそうです。\n運動神経抜群の体育の先生にも勝ち、先生から「3週間以内に勝てるようになります！」と宣戦布告されたようですが、最終日も返り討ちにしたとのこと（笑）。\n実習終わっても絶対に来てね、と言われるほど、かわいがってもらいました。\n\nすごい④　生徒へのメッセージ\n最終日の前々日、珍しく23時過ぎまで作業をしていました。\n何をしているのか聞いたところ、約30人の生徒一人一人に手作りメッセージカードを作っている。。\n二つ折りの紙の表にかわいい絵を描き、中にびっしりコメントを書いています。\nこれは生徒たちは間違いなく嬉しい。\nその証拠に、最終日前日に渡したそのメッセージカードを、ほとんどの子たちが最終日にも持ってきてくれて、一緒に写真を撮ってくれたと。\n聞いただけで涙が出ます。\n\nすごい⑤　生徒からのメッセージ\n最終日に生徒たちからのお礼のメッセージをもらっていました。\n「世界で一番授業がわかりやすかった」\n「やさしく教えてくれてうれしかった」\n「休み時間遊んでくれてありがとう」\n「会えなくなるのがさみしい」\n「先生の授業は一生忘れません」\n3年生なのにみんないっぱい書いてくれています。\n中には「今のまま頑張れば先生になれるよ」との励ましも（笑）。\nこんなに「先生になって欲しい」と子どもたちから言われる教育実習生はいるのかな？\nまあ、みんな若い先生は好きだから言うでしょうね（苦笑）。\nでも、うまく言えないですが、メッセージに愛情がこもっているように思えました。\n\nすごい⑥　先生方からのコメント\n研究授業を見た先生方からのコメントもすごかった。\n「準備の仕方や授業の進め方などとても参考になった」\n「人柄で絶賛されている実習生はなかなかいない」\n「子ども好き好きオーラが伝わってくる」\n「言葉から笑顔が見える」\n「たまには力も抜いてね」\nなんじゃこりゃ。\nさすが言語化を専門にする先生方で、その表現もすごいが、こんなことを言われる子がうちにいるとは（笑）。\n\nすごい⑦　先生方からのプレゼント\n最終日に娘は先生方へのお礼としてお菓子を持っていきました。\nみんな喜んでくれたようですが、、、持って行った以上のお菓子やプレゼントをもらってきました。\nしかもわざわざ用意してくれていた先生も多かったようですし、手書きの手紙までくれた先生も。\nなんて温かい学校だなと思いましたし、そこに溶け込めた娘は本当に誇らしいです。\n\n親ながら、この子は先生になるために産まれてきたのではないか、と思うほどに素晴らしい先生だと思います。\nこの目で見たわけではありませんが、間違いないでしょう。\nだって、本人が悩んで、迷って、笑って、泣いて、とても充実した3週間を過ごしたのですから。\n一日たりとも行きたくないということもなく、最後の最後までとても前向きに取り組んでいました。\n\n実際に先生になったら、なれたら、3週間という短期ではなく、日々、果てしなく長い期間、同じようで全然違う日々を過ごすとても難しい仕事に、悩むことも落ち込むこともたくさんあると思います。\nそれでも、きっとそれを乗り越えて、子どもたちのために本当に素晴らしい先生になってくれると思います。\n\nなんだか自分で書きながら涙が出てきました（笑）。\n親バカですみません。\n\nこの先、この先生に教わる子どもたちが羨ましい！！！\n\n※イラストはChatGPTに描いてもらいました", "renban": 1, "date_iso": "2026-06-07"}, {"date": "20260614", "title": "先人の教え", "body": "今週は研修がありました。\nプレゼンをし、質疑があり、アドバイスを踏まえて再考するという流れです。\n夜の懇親会もあり、心身ともに疲れました。\n\nこの研修、30年以上続いているもので、過去に研修を受けられた方が来られてアドバイスをしてくださいます。\nもっとこうした方がいい、これは止めた方がいい、などなど、先人ならではの貴重なアドバイスです。\n\nと、思いたいのですが、どうしても素直に受け止められないのですよね（苦笑）。\nその理由はいくつかあるのですが、例えば、「型」に対するアドバイス。\n話の流れとしてこういう順番の方がいい、などのアドバイスをいただけます。\nそれはそれで、素直に受け止めるべきところなのですが、でも、欲しいのはそういうアドバイスではないのです。\nもっと本質的というか、芯をつくようなアドバイスが欲しい。\n話の流れが悪いからそこまで行きつかないということなのかもしれませんが。。\n\n資料の充実度合いでご指摘を受けたこともありました。\n「今回の資料、手抜きじゃないか？」と。\n確かにかなり手を抜いています（笑）。\n資料を作る時間よりも、議論をしたり、社外にヒアリングに行ったり、そこに時間を費やしたいので。\n\n相手に伝わる資料でなければ意味がない、というのは分かるのですが、私が伝えたい相手は、この先人たちではなく、研修を通じて検討している内容を「事業」としてプレゼンする相手なのであって、先人たちにはそのプロセスを説明し、アドバイスをもらいたいと思っているのです。\n資料の作りについてアドバイスをもらいたいわけではない。\nと、これもそもそも資料が分かりづらいからそこまで行きついていないのでしょう。\n\n何より一番の理由は、この先人たちが30年間で何を成したのかが見えない、ということが大きいです。\n曲がりなりにも「日本を良くする」という大上段に構えた研修です。\n30年以上続けてきていながら、先人たちは「失われた30年から脱する提案をして欲しい」と言います。\nいやいや、それ、俺らに言う？と思ってしまうのです。\n\nあなたたちが解決できなかったから失われた30年なのであって、それを「君らが変えるべきだ」と言われても、、、\nそれが研修当初からの違和感です。\n\nもちろん私は変えるつもりで取り組んでいます。\nだからこそ、実現できなかった先人たちのアドバイスを鵜呑みにしていては、結局、これまでの30年と同じになってしまうのではないかと感じています。\n\n会社でも同様です。\n今は新規ビジネスを担う立場にいますが、社内に実現してきた人たちはいないにも関わらず、諸先輩方が様々なアドバイスをくれます。\nもちろん、先人たち、諸先輩方のアドバイスには敬意をもって受け止めることは必要だと思っています。\n多くの貴重なご意見もあります。\n\nしかし、「〇〇さんがこう言ったから」と思考停止して行動することだけはしたくありません。\n自分の頭で考え、自ら行動し、社外の専門家の意見を聞いたうえで、自分で判断していきたいと思います。\n研修も仕事も、少なくともアドバイスをくださる方々の中に「実現者」はほとんどいないので。\n\nって、我ながらいつからこんな可愛くない後輩になったのか（笑）。\n先輩たちが読んだら怒るだろうな～。\nま、成長した、ということにしておきましょう。\n\n※イラストはChatGPTに描いてもらいました", "renban": 2, "date_iso": "2026-06-14"}, {"date": "20260621", "title": "人生の答え合わせ", "body": "「人生の答え合わせをしている」\nそんな言葉を生まれて初めて聞きました。\n\n懇親会の席上でのことです。\n言葉を発せられたのは76歳になる大先輩Aさん。\n20年ほど前に同じ部署で仕事をさせていただいた方です。\n\n色々な偶然が重なり、Aさんと、Aさんが30年近く前に採用に関わったBさんと、両者を引き合わせる懇親会が実現しました。\n二人が懇親会で一緒になるのも採用した頃以来とのことで、恐らく30年近くぶりとのことでした。\n\n懇親会の席上で、Bさんの最近の仕事ぶりの話になったのですが、その内容を聞いて、Aさんが冒頭の\n「最近、人生の答え合わせをしていると感じることが良くある」\nという話をされ始めたのです。\n最初はどういうことかと思いましたが、聞くと以下のような話でした。\n\n「若い頃に考えたり判断したり行動したりしたことが、その行為が合っていたかを今になって確認することが増えた」\n「今日、Bさんの今の活躍ぶりを聞いて、当時Bさんを採用しようと決めた私の意思決定は間違っていなかった」\n\nAさんにそんな風に褒められるBさんはとても羨ましい、最初はそんな風に思いましたが、懇親会後に酔いが醒めて冷静になると、むしろそういうことを後輩に言えるAさんが羨ましいと感じました。\n「この人と一緒に仕事をしたい」と思って自ら判断して採用した人が、30年後に自分の予想を上回る活躍をしていることを知ったのです。\nこんな嬉しいことはないですよね。\n\nこの答え合わせは、結果が出るまで長期間かかる問いでなければできないのだと思います。\nなぜなら、短期で結果の出る問いは、どうしても大きな課題を対象にしづらく、大きな課題でなければ「答え合わせ」と他者に胸を張れる話にはなりづらいと思うからです。\n\nAさんはBさんが将来活躍してくれるに違いない、という勝負をし、その答え（＝活躍している）を30年後に確認しました。\n過去の自分が誇らしく思うでしょうし、成長してくれたBさんのことも誇らしく感じられます。\n\n僕も、Aさんのように、一つでも人生の答え合わせができる取組みを意識して行っていきたいと思いました。\n\n※イラストはChatGPTに描いてもらいました", "renban": 3, "date_iso": "2026-06-21"}, {"date": "20260628", "title": "循環を感じる", "body": "地域のイベントに参加してきました。\nどんなイベントかというと、田んぼ周辺の草刈りをするというもの。\n島根県の雲南市というところで10年前から行われているもので、今回も50名ほどの参加者がいました。\n市内の別地域からの参加はもちろん、近隣の県からの参加や、遠いところは東京から、しかも参加は3回目というツワモノもいました。\n\n高齢化が進む地域にとって、草刈りはとても大変な作業です。\n一方で、経験のない人たちにとっては草刈りは非日常のアクティビティになります。\nそこをうまくマッチングして、年3回のイベントとして確立しているのです。\n\n参加するまでは、ここでできるなら他の地域にも展開できそう！と思いましたが、行ってみて、やってみて、そんなに簡単なことではないということがよくわかりました。\n簡単じゃない理由はいろいろありますが、特に地域の人たちの「受け入れる力」と「語る力」が大事だと感じました。\n\n「受け入れる力」は多様性受容と言い換えても良いでしょう。\n外から来た見知らぬ我々を受け入れ、草刈り機の扱い方などを説明するだけでなく、我々に興味を持って話しかけてきてくれます。\n初対面でも「仲間」として受け入れてくれる力が半端ではありません。\n\n地方はどうしても閉鎖的になりがちですが、それを解き放つことができればいわゆる「関係人口」として関わりを持ってくれる人が増えてくる可能性はあるのだと感じました。\nが、それも10年間やり続けたからです。\nやり続けることにより、地域の人たちにも受け入れる力が育ってきたとおっしゃっていました。\n\nもう一つの「語る力」を感じたのは、作業をサポートしてくださる地域の方々お一人お一人が、「なぜ草刈りをする必要があるのか」ということを分かりやすく説明してくださるからです。\n雑草はこの時期、一度やっても1カ月もするとすぐに繁茂してしまいます。\n無理して草刈りせずに、放置してもいいのではないか？という効率性重視の都市の理論を投げかけたところ、\n・草が放置されると虫が多く発生する\n・虫が増えるとイノシシなどの獣が山から下りてくる\n・草はイノシシなどの隠れ家にもなる\n・獣が田んぼを荒らしてしまいコメが育たなくなる\nなどの説明をしてくださいました。（私の理解が正確でない可能性があります）\n\nこれって、代々受け継がれてきたことなのだと思います。\nそして事実そうなのだと思います。\n\n都市で暮らしていると、目の前の作業の意味を考えることは少ないような気がします。\nなぜなら、考えなくても得たいものが得られるように人間に最適化されているからです。\n電車に乗る、動画を見る、ゲームをする、ご飯を注文する、、、\nそれらの行為を行うことの意味や、それによる影響など深く考えていないと思います。\n\nこのところ、今回のような地域活動に参加する機会が少しずつ増えていますが、その都度感じるのは、地域には循環がある、ということです。\n草を刈ることにより田んぼの生育が順調に進む。\nそういうことが代々受け継がれていく。\nそこに価値を感じて他の地域の人たちが混ざっていく。\nやり続けることで地域の人たちの受け入れ力も高まっていく。\n\n一つ一つに循環があり、また全体としての大きな循環がある。\n輪廻、というのでしょうかね。\nあるいは螺旋ということなのかもしれません。\n\nとにかく、何かと何かが繋がり合って循環することで、人間の生活は成り立っているのだということを、この歳になってようやく実感しています。\n都市で暮らす人たちが地域に関わる活動を行っていくことは、地域の人たち以上に都市住民にとって学びの多いことなのだろうと思います。\n個人としての営みを継続させていくとともに、同じような経験を周囲の人たちにも促していきたいなと思いました\n\n※イラストはChatGPTに描いてもらいました", "renban": 4, "date_iso": "2026-06-28"}];
 
-const STORE_KEY = 'noteslog_records_v1';
+const firebaseConfig = {
+  apiKey: "AIzaSyAxVn7JUuoBsNeSODksNYyEkd2W2E252_c",
+  authDomain: "life--log.firebaseapp.com",
+  databaseURL: "https://life--log-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "life--log",
+  storageBucket: "life--log.firebasestorage.app",
+  messagingSenderId: "790653257684",
+  appId: "1:790653257684:web:fc872928728e14658f3841"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+const recordsRef = db.ref('notelog/records');
+
 let records = [];
 let activeDetailId = null;
-
-function uid(){ return 'r_' + Math.random().toString(36).slice(2,10) + Date.now().toString(36); }
 
 function parseRaw(text){
   const lines = text.replace(/\r\n/g,'\n').split('\n');
@@ -316,47 +336,41 @@ function toIso(yyyymmdd){
   return yyyymmdd.slice(0,4) + '-' + yyyymmdd.slice(4,6) + '-' + yyyymmdd.slice(6,8);
 }
 
-function renumber(){
-  records.sort((a,b) => a.date.localeCompare(b.date) || a.title.localeCompare(b.title));
-  records.forEach((r,i) => r.renban = i+1);
+function objectToArray(obj){
+  if(!obj) return [];
+  return Object.keys(obj).map(id => ({
+    id,
+    date: obj[id].date,
+    title: obj[id].title,
+    body: obj[id].body || ''
+  }));
 }
 
-async function loadRecords(){
-  try{
-    const res = await window.storage.get(STORE_KEY, false);
-    if(res && res.value){
-      records = JSON.parse(res.value);
-      return;
-    }
-  }catch(e){ /* not found */ }
-  records = SEED_DATA.map(r => ({id: uid(), date: r.date, title: r.title, body: r.body}));
-  renumber();
-  await persist();
+function renumber(list){
+  list.sort((a,b) => a.date.localeCompare(b.date) || a.title.localeCompare(b.title));
+  list.forEach((r,i) => r.renban = i+1);
+  return list;
 }
 
-async function persist(){
-  renumber();
-  try{
-    await window.storage.set(STORE_KEY, JSON.stringify(records), false);
-  }catch(e){
-    console.error('保存に失敗しました', e);
+function setSyncState(state){
+  const dot = document.getElementById('syncDot');
+  const label = document.getElementById('syncLabel');
+  dot.classList.remove('on','err');
+  if(state === 'on'){ dot.classList.add('on'); label.textContent = 'Firebase 同期中'; }
+  else if(state === 'err'){ dot.classList.add('err'); label.textContent = '同期エラー'; }
+  else { label.textContent = '接続中…'; }
+}
+
+async function seedIfEmpty(){
+  const snap = await recordsRef.once('value');
+  if(!snap.exists()){
+    const updates = {};
+    SEED_DATA.forEach(r => {
+      const key = recordsRef.push().key;
+      updates[key] = {date: r.date, title: r.title, body: r.body};
+    });
+    await recordsRef.update(updates);
   }
-}
-
-function mergeParsed(parsed){
-  let added = 0, updated = 0;
-  for(const p of parsed){
-    if(!p.title || !/^\d{8}$/.test(p.date)) continue;
-    const existing = records.find(r => r.date === p.date && r.title === p.title);
-    if(existing){
-      existing.body = p.body;
-      updated++;
-    }else{
-      records.push({id: uid(), date: p.date, title: p.title, body: p.body});
-      added++;
-    }
-  }
-  return {added, updated};
 }
 
 function escapeHtml(s){
@@ -402,21 +416,32 @@ function render(){
   wrap.querySelectorAll('.entry-card').forEach(el => {
     el.addEventListener('click', () => openDetail(el.dataset.id));
   });
+
+  if(activeDetailId){
+    const still = records.find(x => x.id === activeDetailId);
+    if(still) refreshDetailView(still);
+    else closeModal('detail');
+  }
 }
 
 function openDetail(id){
   const r = records.find(x => x.id === id);
   if(!r) return;
   activeDetailId = id;
+  refreshDetailView(r);
+  document.getElementById('detailBackdrop').classList.add('open');
+}
+
+function refreshDetailView(r){
   document.getElementById('detailStamp').textContent = r.renban;
   document.getElementById('detailTitle').textContent = r.title;
   document.getElementById('detailMeta').textContent = `${toIso(r.date)}　#${r.renban}`;
   document.getElementById('detailBody').textContent = r.body;
-  document.getElementById('detailBackdrop').classList.add('open');
 }
 
 function closeModal(which){
   document.getElementById(which + 'Backdrop').classList.remove('open');
+  if(which === 'detail') activeDetailId = null;
 }
 
 function openEditForm(r){
@@ -437,10 +462,13 @@ document.getElementById('editBtn').addEventListener('click', () => {
 
 document.getElementById('deleteBtn').addEventListener('click', async () => {
   if(!confirm('この記事を削除しますか？この操作は取り消せません。')) return;
-  records = records.filter(x => x.id !== activeDetailId);
-  await persist();
+  const id = activeDetailId;
   closeModal('detail');
-  render();
+  try{
+    await recordsRef.child(id).remove();
+  }catch(e){
+    setSyncState('err');
+  }
 });
 
 document.getElementById('saveEditBtn').addEventListener('click', async () => {
@@ -453,15 +481,18 @@ document.getElementById('saveEditBtn').addEventListener('click', async () => {
   }
   const yyyymmdd = dateVal.replaceAll('-','');
   const editingId = document.getElementById('editBackdrop').dataset.editingId;
-  if(editingId){
-    const r = records.find(x => x.id === editingId);
-    r.date = yyyymmdd; r.title = titleVal; r.body = bodyVal;
-  }else{
-    records.push({id: uid(), date: yyyymmdd, title: titleVal, body: bodyVal});
+  try{
+    if(editingId){
+      await recordsRef.child(editingId).update({date: yyyymmdd, title: titleVal, body: bodyVal});
+    }else{
+      const key = recordsRef.push().key;
+      await recordsRef.child(key).set({date: yyyymmdd, title: titleVal, body: bodyVal});
+    }
+    closeModal('edit');
+  }catch(e){
+    setSyncState('err');
+    alert('保存に失敗しました。通信状態をご確認ください。');
   }
-  await persist();
-  closeModal('edit');
-  render();
 });
 
 document.getElementById('openImport').addEventListener('click', () => {
@@ -472,15 +503,31 @@ document.getElementById('openImport').addEventListener('click', () => {
 
 document.getElementById('runImportBtn').addEventListener('click', async () => {
   const text = document.getElementById('importText').value;
-  const parsed = parseRaw(text);
+  const parsed = parseRaw(text).filter(p => p.title && /^\d{8}$/.test(p.date));
   if(parsed.length === 0){
     document.getElementById('importResult').textContent = '記事の区切りを検出できませんでした。「yyyymmdd_タイトル」形式の行があるかご確認ください。';
     return;
   }
-  const {added, updated} = mergeParsed(parsed);
-  await persist();
-  render();
-  document.getElementById('importResult').textContent = `取り込み完了：新規 ${added} 件、更新 ${updated} 件`;
+  let added = 0, updated = 0;
+  const updates = {};
+  for(const p of parsed){
+    const existing = records.find(r => r.date === p.date && r.title === p.title);
+    if(existing){
+      updates[existing.id] = {date: p.date, title: p.title, body: p.body};
+      updated++;
+    }else{
+      const key = recordsRef.push().key;
+      updates[key] = {date: p.date, title: p.title, body: p.body};
+      added++;
+    }
+  }
+  try{
+    await recordsRef.update(updates);
+    document.getElementById('importResult').textContent = `取り込み完了：新規 ${added} 件、更新 ${updated} 件`;
+  }catch(e){
+    document.getElementById('importResult').textContent = '取り込みに失敗しました。通信状態をご確認ください。';
+    setSyncState('err');
+  }
 });
 
 document.querySelectorAll('[data-close]').forEach(btn => {
@@ -493,9 +540,22 @@ document.querySelectorAll('.modal-backdrop').forEach(bd => {
 document.getElementById('searchBox').addEventListener('input', render);
 document.getElementById('yearFilter').addEventListener('change', render);
 
-(async function init(){
-  await loadRecords();
+recordsRef.on('value', snap => {
+  records = renumber(objectToArray(snap.val()));
+  setSyncState('on');
   render();
+}, err => {
+  console.error(err);
+  setSyncState('err');
+});
+
+(async function init(){
+  try{
+    await seedIfEmpty();
+  }catch(e){
+    console.error('seed failed', e);
+    setSyncState('err');
+  }
 })();
 </script>
 </body>
