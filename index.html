@@ -140,7 +140,12 @@
     transform:rotate(-6deg);
   }
   .entry-main{flex:1;min-width:0;}
-  .entry-date{font-size:12px;color:var(--ink-soft);letter-spacing:.05em;margin-bottom:3px;}
+  .entry-date-row{display:flex;align-items:center;gap:8px;margin-bottom:3px;flex-wrap:wrap;}
+  .entry-date{font-size:12px;color:var(--ink-soft);letter-spacing:.05em;}
+  .entry-charcount{
+    font-size:11px;color:var(--moss-dark);background:var(--moss-soft);
+    padding:1px 7px;border-radius:8px;letter-spacing:.02em;
+  }
   .entry-title{
     font-family:'Shippori Mincho',serif;font-size:19px;color:var(--ink);
     margin:0 0 6px 0;
@@ -149,6 +154,26 @@
     font-size:13.5px;color:var(--ink-soft);line-height:1.7;
     display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
   }
+
+  .stats-grid{
+    display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px;
+  }
+  .stats-box{
+    background:var(--card);border:1px solid var(--line);border-radius:4px;
+    padding:14px 12px;text-align:center;
+  }
+  .stats-box .num{
+    font-family:'Shippori Mincho',serif;font-size:22px;color:var(--ink);display:block;
+  }
+  .stats-box .label{font-size:11.5px;color:var(--ink-soft);margin-top:4px;}
+  .stats-table{width:100%;border-collapse:collapse;font-size:13px;}
+  .stats-table th, .stats-table td{
+    text-align:right;padding:7px 8px;border-bottom:1px solid var(--line);
+  }
+  .stats-table th:first-child, .stats-table td:first-child{text-align:left;}
+  .stats-table thead th{color:var(--ink-soft);font-weight:700;font-size:11.5px;letter-spacing:.03em;}
+  .stats-table tbody tr:hover{background:var(--moss-soft);}
+  .stats-scroll{max-height:44vh;overflow-y:auto;}
 
   .modal-backdrop{
     position:fixed;inset:0;background:rgba(46,42,36,.45);
@@ -221,6 +246,7 @@
     <select id="yearFilter"><option value="">すべての年</option></select>
     <span class="spacer"></span>
     <span class="count-tag" id="countTag"></span>
+    <button class="btn btn-ghost" id="openStats">集計</button>
     <button class="btn btn-ghost" id="openImport">取り込み</button>
     <button class="btn btn-primary" id="openNew">＋ 新規記事</button>
   </div>
@@ -239,6 +265,7 @@
     <div class="modal-body-view" id="detailBody"></div>
     <div class="modal-actions">
       <button class="btn btn-danger" id="deleteBtn">削除</button>
+      <button class="btn btn-ghost" id="copyBtn">コピー</button>
       <button class="btn btn-ghost" id="editBtn">編集</button>
     </div>
   </div>
@@ -286,6 +313,27 @@
     <div class="modal-actions">
       <button class="btn btn-ghost" data-close="import">閉じる</button>
       <button class="btn btn-primary" id="runImportBtn">取り込む</button>
+    </div>
+  </div>
+</div>
+
+<!-- Stats modal -->
+<div class="modal-backdrop" id="statsBackdrop">
+  <div class="modal" style="max-width:760px;">
+    <button class="modal-close" data-close="stats">×</button>
+    <h2>集計</h2>
+    <div class="stats-grid">
+      <div class="stats-box"><span class="num" id="statTotalCount">0</span><span class="label">記事数</span></div>
+      <div class="stats-box"><span class="num" id="statTotalChars">0</span><span class="label">総文字数</span></div>
+      <div class="stats-box"><span class="num" id="statAvgChars">0</span><span class="label">平均文字数/記事</span></div>
+    </div>
+    <div class="stats-scroll">
+      <table class="stats-table">
+        <thead>
+          <tr><th>年</th><th>記事数</th><th>合計文字数</th><th>平均文字数</th></tr>
+        </thead>
+        <tbody id="statsYearBody"></tbody>
+      </table>
     </div>
   </div>
 </div>
@@ -395,6 +443,16 @@ function populateYearFilter(){
   sel.value = cur;
 }
 
+function charCount(text){
+  // Count visible characters, excluding whitespace-only newlines, matching
+  // how people usually mean "文字数" for prose (no leading/trailing blank lines).
+  return (text || '').replace(/\r\n/g, '\n').trim().length;
+}
+
+function formatNum(n){
+  return n.toLocaleString('ja-JP');
+}
+
 function render(){
   populateYearFilter();
   const q = document.getElementById('searchBox').value.trim().toLowerCase();
@@ -416,7 +474,10 @@ function render(){
     <div class="entry-card" data-id="${r.id}">
       <div class="stamp">${r.renban}</div>
       <div class="entry-main">
-        <div class="entry-date">${toIso(r.date)}</div>
+        <div class="entry-date-row">
+          <span class="entry-date">${toIso(r.date)}</span>
+          <span class="entry-charcount">${formatNum(charCount(r.body))}字</span>
+        </div>
         <div class="entry-title">${escapeHtml(r.title)}</div>
         <div class="entry-snippet">${escapeHtml(r.body.slice(0,120).replace(/\n/g,' '))}</div>
       </div>
@@ -445,7 +506,7 @@ function openDetail(id){
 function refreshDetailView(r){
   document.getElementById('detailStamp').textContent = r.renban;
   document.getElementById('detailTitle').textContent = r.title;
-  document.getElementById('detailMeta').textContent = `${toIso(r.date)}　#${r.renban}`;
+  document.getElementById('detailMeta').textContent = `${toIso(r.date)}　#${r.renban}　${formatNum(charCount(r.body))}字`;
   document.getElementById('detailBody').textContent = r.body;
 }
 
@@ -468,6 +529,33 @@ document.getElementById('editBtn').addEventListener('click', () => {
   const r = records.find(x => x.id === activeDetailId);
   closeModal('detail');
   openEditForm(r);
+});
+
+document.getElementById('copyBtn').addEventListener('click', async () => {
+  const r = records.find(x => x.id === activeDetailId);
+  if(!r) return;
+  const text = `${toIso(r.date)}_${r.title}\n\n${r.body}`;
+  const btn = document.getElementById('copyBtn');
+  const original = btn.textContent;
+  try{
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      await navigator.clipboard.writeText(text);
+    }else{
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+    }
+    btn.textContent = 'コピーしました';
+  }catch(e){
+    console.error('コピー失敗', e);
+    btn.textContent = 'コピー失敗';
+  }
+  setTimeout(() => { btn.textContent = original; }, 1500);
 });
 
 document.getElementById('deleteBtn').addEventListener('click', async () => {
@@ -509,6 +597,40 @@ document.getElementById('openImport').addEventListener('click', () => {
   document.getElementById('importText').value = '';
   document.getElementById('importResult').textContent = '';
   document.getElementById('importBackdrop').classList.add('open');
+});
+
+function renderStats(){
+  const totalCount = records.length;
+  const totalChars = records.reduce((sum, r) => sum + charCount(r.body), 0);
+  const avgChars = totalCount > 0 ? Math.round(totalChars / totalCount) : 0;
+
+  document.getElementById('statTotalCount').textContent = formatNum(totalCount);
+  document.getElementById('statTotalChars').textContent = formatNum(totalChars);
+  document.getElementById('statAvgChars').textContent = formatNum(avgChars);
+
+  const byYear = {};
+  records.forEach(r => {
+    const y = r.date.slice(0,4);
+    if(!byYear[y]) byYear[y] = {count: 0, chars: 0};
+    byYear[y].count += 1;
+    byYear[y].chars += charCount(r.body);
+  });
+  const years = Object.keys(byYear).sort().reverse();
+  const tbody = document.getElementById('statsYearBody');
+  if(years.length === 0){
+    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:var(--ink-soft);">データがありません</td></tr>`;
+  }else{
+    tbody.innerHTML = years.map(y => {
+      const d = byYear[y];
+      const avg = Math.round(d.chars / d.count);
+      return `<tr><td>${y}年</td><td>${formatNum(d.count)}</td><td>${formatNum(d.chars)}</td><td>${formatNum(avg)}</td></tr>`;
+    }).join('');
+  }
+}
+
+document.getElementById('openStats').addEventListener('click', () => {
+  renderStats();
+  document.getElementById('statsBackdrop').classList.add('open');
 });
 
 const IMPORT_BATCH_SIZE = 8;
