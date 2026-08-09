@@ -175,6 +175,29 @@
   .stats-table tbody tr:hover{background:var(--moss-soft);}
   .stats-scroll{max-height:44vh;overflow-y:auto;}
 
+  .idea-form{
+    background:var(--moss-soft);border:1px solid var(--line);border-radius:4px;
+    padding:14px;margin-bottom:18px;
+  }
+  .idea-form .field{margin-bottom:10px;}
+  .idea-loc-status{font-size:11.5px;color:var(--ink-soft);margin-bottom:8px;min-height:14px;}
+  .idea-list{display:flex;flex-direction:column;gap:10px;max-height:52vh;overflow-y:auto;}
+  .idea-card{
+    background:var(--card);border:1px solid var(--line);border-left:4px solid var(--gold);
+    border-radius:2px 6px 6px 2px;padding:12px 14px;
+  }
+  .idea-card.used{border-left-color:var(--line);opacity:.62;}
+  .idea-card-head{display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap;}
+  .idea-title{font-family:'Shippori Mincho',serif;font-size:16px;color:var(--ink);flex:1;min-width:0;}
+  .idea-used-badge{
+    font-size:10.5px;background:var(--ink-soft);color:#fff;padding:1px 7px;border-radius:8px;
+  }
+  .idea-content{font-size:13.5px;color:var(--ink-soft);line-height:1.7;white-space:pre-wrap;margin-bottom:6px;}
+  .idea-meta{font-size:11px;color:var(--ink-soft);margin-bottom:8px;}
+  .idea-actions{display:flex;gap:6px;flex-wrap:wrap;}
+  .idea-actions .btn{font-size:12px;padding:6px 10px;}
+  .idea-empty{text-align:center;padding:30px 10px;color:var(--ink-soft);font-size:13px;}
+
   .modal-backdrop{
     position:fixed;inset:0;background:rgba(46,42,36,.45);
     display:none;align-items:flex-start;justify-content:center;
@@ -251,6 +274,7 @@
     <span class="spacer"></span>
     <span class="count-tag" id="countTag"></span>
     <button class="btn btn-ghost" id="openStats">集計</button>
+    <button class="btn btn-ghost" id="openIdeas">ネタ帳</button>
     <button class="btn btn-ghost" id="openSettings">設定</button>
     <button class="btn btn-primary" id="openNew">＋ 新規記事</button>
   </div>
@@ -367,6 +391,48 @@
   </div>
 </div>
 
+<!-- Idea notebook modal (shared with ささやきログ via sasayakiLog/ideas) -->
+<div class="modal-backdrop" id="ideasBackdrop">
+  <div class="modal" style="max-width:640px;">
+    <button class="modal-close" data-close="ideas">×</button>
+    <h2>ネタ帳</h2>
+    <div class="idea-form">
+      <div class="field">
+        <label>タイトル</label>
+        <input type="text" id="ideaTitleInput" placeholder="タイトル（例：写真甲子園の話）">
+      </div>
+      <div class="field">
+        <label>内容・メモ</label>
+        <textarea id="ideaContentInput" rows="3" placeholder="内容・メモ"></textarea>
+      </div>
+      <div class="idea-loc-status" id="ideaLocStatus"></div>
+      <button type="button" class="btn btn-primary" id="ideaSaveBtn" style="width:100%;">💡 メモを保存</button>
+    </div>
+    <div class="idea-list" id="ideaList"></div>
+    <div class="idea-empty hidden" id="ideaEmptyState">まだネタがありません。思いついたらすぐメモしましょう。</div>
+  </div>
+</div>
+
+<!-- Idea edit sub-modal -->
+<div class="modal-backdrop" id="ideaEditBackdrop">
+  <div class="modal">
+    <button class="modal-close" data-close="ideaEdit">×</button>
+    <h2>ネタを編集</h2>
+    <div class="field">
+      <label>タイトル</label>
+      <input type="text" id="ideaEditTitle">
+    </div>
+    <div class="field">
+      <label>内容・メモ</label>
+      <textarea id="ideaEditContent" rows="4"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" data-close="ideaEdit">キャンセル</button>
+      <button class="btn btn-primary" id="ideaEditSaveBtn">保存する</button>
+    </div>
+  </div>
+</div>
+
 <script>
 const SEED_DATA = [{"date": "20260607", "title": "すごい娘", "body": "長女が3週間の教育実習を終えました。\n小学3年生を受け持たせてもらい、授業をするのはもちろん、その準備のために先生方の指導を受けたり、休み時間に子どもたちと遊んだり、、、最後は「研究授業」という（だったかな汗）多くの先生方の見る前で授業を行いコメントをもらう、という経験まで積んできました。\n\nそんな娘の話をときおり聞いていて、いろいろと「すごい」と感じたので、備忘の意味も含めて記録しておこうと思います。\n\nすごい①　事前準備\n毎日の授業に向けて家に帰ってきてから真剣に準備しています。\nその準備は、通り一遍のものでなく、「あの子にはこの伝え方で伝わるかな」と一人一人の顔を思い浮かべながら指導方法を考えているのです。\n僕のように、日々行き当たりばったりで仕事をしている人間からすると、想像を絶する準備です。\n\nすごい②　生活習慣\nもともと、娘はそんなに生活習慣が良い方ではありません。\nNetflixを見たり、ゲームをしたりして夜更かしすることもしばしば。\nですが、この期間は「意識高い系」の生活習慣だったように思います。\n授業の準備を終えたら23時には就寝し、朝6時頃から準備をして出ていく。\nやればできるんですね。\n\nすごい③　先生方との交流\nある夜、普段は20時には帰ってくる娘が21時を過ぎても帰ってこないので妻が心配し始めました。\n結局、22時くらいに帰ってきたのですが、聞くと、「先生たちとバドミントンしてきた」と。\n飲みにでも行っているのかと思いきや、なんて健康的！\n娘は高校の途中までバドミントンをやっていたのもあり、仲間に入れてもらったそうです。\n運動神経抜群の体育の先生にも勝ち、先生から「3週間以内に勝てるようになります！」と宣戦布告されたようですが、最終日も返り討ちにしたとのこと（笑）。\n実習終わっても絶対に来てね、と言われるほど、かわいがってもらいました。\n\nすごい④　生徒へのメッセージ\n最終日の前々日、珍しく23時過ぎまで作業をしていました。\n何をしているのか聞いたところ、約30人の生徒一人一人に手作りメッセージカードを作っている。。\n二つ折りの紙の表にかわいい絵を描き、中にびっしりコメントを書いています。\nこれは生徒たちは間違いなく嬉しい。\nその証拠に、最終日前日に渡したそのメッセージカードを、ほとんどの子たちが最終日にも持ってきてくれて、一緒に写真を撮ってくれたと。\n聞いただけで涙が出ます。\n\nすごい⑤　生徒からのメッセージ\n最終日に生徒たちからのお礼のメッセージをもらっていました。\n「世界で一番授業がわかりやすかった」\n「やさしく教えてくれてうれしかった」\n「休み時間遊んでくれてありがとう」\n「会えなくなるのがさみしい」\n「先生の授業は一生忘れません」\n3年生なのにみんないっぱい書いてくれています。\n中には「今のまま頑張れば先生になれるよ」との励ましも（笑）。\nこんなに「先生になって欲しい」と子どもたちから言われる教育実習生はいるのかな？\nまあ、みんな若い先生は好きだから言うでしょうね（苦笑）。\nでも、うまく言えないですが、メッセージに愛情がこもっているように思えました。\n\nすごい⑥　先生方からのコメント\n研究授業を見た先生方からのコメントもすごかった。\n「準備の仕方や授業の進め方などとても参考になった」\n「人柄で絶賛されている実習生はなかなかいない」\n「子ども好き好きオーラが伝わってくる」\n「言葉から笑顔が見える」\n「たまには力も抜いてね」\nなんじゃこりゃ。\nさすが言語化を専門にする先生方で、その表現もすごいが、こんなことを言われる子がうちにいるとは（笑）。\n\nすごい⑦　先生方からのプレゼント\n最終日に娘は先生方へのお礼としてお菓子を持っていきました。\nみんな喜んでくれたようですが、、、持って行った以上のお菓子やプレゼントをもらってきました。\nしかもわざわざ用意してくれていた先生も多かったようですし、手書きの手紙までくれた先生も。\nなんて温かい学校だなと思いましたし、そこに溶け込めた娘は本当に誇らしいです。\n\n親ながら、この子は先生になるために産まれてきたのではないか、と思うほどに素晴らしい先生だと思います。\nこの目で見たわけではありませんが、間違いないでしょう。\nだって、本人が悩んで、迷って、笑って、泣いて、とても充実した3週間を過ごしたのですから。\n一日たりとも行きたくないということもなく、最後の最後までとても前向きに取り組んでいました。\n\n実際に先生になったら、なれたら、3週間という短期ではなく、日々、果てしなく長い期間、同じようで全然違う日々を過ごすとても難しい仕事に、悩むことも落ち込むこともたくさんあると思います。\nそれでも、きっとそれを乗り越えて、子どもたちのために本当に素晴らしい先生になってくれると思います。\n\nなんだか自分で書きながら涙が出てきました（笑）。\n親バカですみません。\n\nこの先、この先生に教わる子どもたちが羨ましい！！！\n\n※イラストはChatGPTに描いてもらいました", "renban": 1, "date_iso": "2026-06-07"}, {"date": "20260614", "title": "先人の教え", "body": "今週は研修がありました。\nプレゼンをし、質疑があり、アドバイスを踏まえて再考するという流れです。\n夜の懇親会もあり、心身ともに疲れました。\n\nこの研修、30年以上続いているもので、過去に研修を受けられた方が来られてアドバイスをしてくださいます。\nもっとこうした方がいい、これは止めた方がいい、などなど、先人ならではの貴重なアドバイスです。\n\nと、思いたいのですが、どうしても素直に受け止められないのですよね（苦笑）。\nその理由はいくつかあるのですが、例えば、「型」に対するアドバイス。\n話の流れとしてこういう順番の方がいい、などのアドバイスをいただけます。\nそれはそれで、素直に受け止めるべきところなのですが、でも、欲しいのはそういうアドバイスではないのです。\nもっと本質的というか、芯をつくようなアドバイスが欲しい。\n話の流れが悪いからそこまで行きつかないということなのかもしれませんが。。\n\n資料の充実度合いでご指摘を受けたこともありました。\n「今回の資料、手抜きじゃないか？」と。\n確かにかなり手を抜いています（笑）。\n資料を作る時間よりも、議論をしたり、社外にヒアリングに行ったり、そこに時間を費やしたいので。\n\n相手に伝わる資料でなければ意味がない、というのは分かるのですが、私が伝えたい相手は、この先人たちではなく、研修を通じて検討している内容を「事業」としてプレゼンする相手なのであって、先人たちにはそのプロセスを説明し、アドバイスをもらいたいと思っているのです。\n資料の作りについてアドバイスをもらいたいわけではない。\nと、これもそもそも資料が分かりづらいからそこまで行きついていないのでしょう。\n\n何より一番の理由は、この先人たちが30年間で何を成したのかが見えない、ということが大きいです。\n曲がりなりにも「日本を良くする」という大上段に構えた研修です。\n30年以上続けてきていながら、先人たちは「失われた30年から脱する提案をして欲しい」と言います。\nいやいや、それ、俺らに言う？と思ってしまうのです。\n\nあなたたちが解決できなかったから失われた30年なのであって、それを「君らが変えるべきだ」と言われても、、、\nそれが研修当初からの違和感です。\n\nもちろん私は変えるつもりで取り組んでいます。\nだからこそ、実現できなかった先人たちのアドバイスを鵜呑みにしていては、結局、これまでの30年と同じになってしまうのではないかと感じています。\n\n会社でも同様です。\n今は新規ビジネスを担う立場にいますが、社内に実現してきた人たちはいないにも関わらず、諸先輩方が様々なアドバイスをくれます。\nもちろん、先人たち、諸先輩方のアドバイスには敬意をもって受け止めることは必要だと思っています。\n多くの貴重なご意見もあります。\n\nしかし、「〇〇さんがこう言ったから」と思考停止して行動することだけはしたくありません。\n自分の頭で考え、自ら行動し、社外の専門家の意見を聞いたうえで、自分で判断していきたいと思います。\n研修も仕事も、少なくともアドバイスをくださる方々の中に「実現者」はほとんどいないので。\n\nって、我ながらいつからこんな可愛くない後輩になったのか（笑）。\n先輩たちが読んだら怒るだろうな～。\nま、成長した、ということにしておきましょう。\n\n※イラストはChatGPTに描いてもらいました", "renban": 2, "date_iso": "2026-06-14"}, {"date": "20260621", "title": "人生の答え合わせ", "body": "「人生の答え合わせをしている」\nそんな言葉を生まれて初めて聞きました。\n\n懇親会の席上でのことです。\n言葉を発せられたのは76歳になる大先輩Aさん。\n20年ほど前に同じ部署で仕事をさせていただいた方です。\n\n色々な偶然が重なり、Aさんと、Aさんが30年近く前に採用に関わったBさんと、両者を引き合わせる懇親会が実現しました。\n二人が懇親会で一緒になるのも採用した頃以来とのことで、恐らく30年近くぶりとのことでした。\n\n懇親会の席上で、Bさんの最近の仕事ぶりの話になったのですが、その内容を聞いて、Aさんが冒頭の\n「最近、人生の答え合わせをしていると感じることが良くある」\nという話をされ始めたのです。\n最初はどういうことかと思いましたが、聞くと以下のような話でした。\n\n「若い頃に考えたり判断したり行動したりしたことが、その行為が合っていたかを今になって確認することが増えた」\n「今日、Bさんの今の活躍ぶりを聞いて、当時Bさんを採用しようと決めた私の意思決定は間違っていなかった」\n\nAさんにそんな風に褒められるBさんはとても羨ましい、最初はそんな風に思いましたが、懇親会後に酔いが醒めて冷静になると、むしろそういうことを後輩に言えるAさんが羨ましいと感じました。\n「この人と一緒に仕事をしたい」と思って自ら判断して採用した人が、30年後に自分の予想を上回る活躍をしていることを知ったのです。\nこんな嬉しいことはないですよね。\n\nこの答え合わせは、結果が出るまで長期間かかる問いでなければできないのだと思います。\nなぜなら、短期で結果の出る問いは、どうしても大きな課題を対象にしづらく、大きな課題でなければ「答え合わせ」と他者に胸を張れる話にはなりづらいと思うからです。\n\nAさんはBさんが将来活躍してくれるに違いない、という勝負をし、その答え（＝活躍している）を30年後に確認しました。\n過去の自分が誇らしく思うでしょうし、成長してくれたBさんのことも誇らしく感じられます。\n\n僕も、Aさんのように、一つでも人生の答え合わせができる取組みを意識して行っていきたいと思いました。\n\n※イラストはChatGPTに描いてもらいました", "renban": 3, "date_iso": "2026-06-21"}, {"date": "20260628", "title": "循環を感じる", "body": "地域のイベントに参加してきました。\nどんなイベントかというと、田んぼ周辺の草刈りをするというもの。\n島根県の雲南市というところで10年前から行われているもので、今回も50名ほどの参加者がいました。\n市内の別地域からの参加はもちろん、近隣の県からの参加や、遠いところは東京から、しかも参加は3回目というツワモノもいました。\n\n高齢化が進む地域にとって、草刈りはとても大変な作業です。\n一方で、経験のない人たちにとっては草刈りは非日常のアクティビティになります。\nそこをうまくマッチングして、年3回のイベントとして確立しているのです。\n\n参加するまでは、ここでできるなら他の地域にも展開できそう！と思いましたが、行ってみて、やってみて、そんなに簡単なことではないということがよくわかりました。\n簡単じゃない理由はいろいろありますが、特に地域の人たちの「受け入れる力」と「語る力」が大事だと感じました。\n\n「受け入れる力」は多様性受容と言い換えても良いでしょう。\n外から来た見知らぬ我々を受け入れ、草刈り機の扱い方などを説明するだけでなく、我々に興味を持って話しかけてきてくれます。\n初対面でも「仲間」として受け入れてくれる力が半端ではありません。\n\n地方はどうしても閉鎖的になりがちですが、それを解き放つことができればいわゆる「関係人口」として関わりを持ってくれる人が増えてくる可能性はあるのだと感じました。\nが、それも10年間やり続けたからです。\nやり続けることにより、地域の人たちにも受け入れる力が育ってきたとおっしゃっていました。\n\nもう一つの「語る力」を感じたのは、作業をサポートしてくださる地域の方々お一人お一人が、「なぜ草刈りをする必要があるのか」ということを分かりやすく説明してくださるからです。\n雑草はこの時期、一度やっても1カ月もするとすぐに繁茂してしまいます。\n無理して草刈りせずに、放置してもいいのではないか？という効率性重視の都市の理論を投げかけたところ、\n・草が放置されると虫が多く発生する\n・虫が増えるとイノシシなどの獣が山から下りてくる\n・草はイノシシなどの隠れ家にもなる\n・獣が田んぼを荒らしてしまいコメが育たなくなる\nなどの説明をしてくださいました。（私の理解が正確でない可能性があります）\n\nこれって、代々受け継がれてきたことなのだと思います。\nそして事実そうなのだと思います。\n\n都市で暮らしていると、目の前の作業の意味を考えることは少ないような気がします。\nなぜなら、考えなくても得たいものが得られるように人間に最適化されているからです。\n電車に乗る、動画を見る、ゲームをする、ご飯を注文する、、、\nそれらの行為を行うことの意味や、それによる影響など深く考えていないと思います。\n\nこのところ、今回のような地域活動に参加する機会が少しずつ増えていますが、その都度感じるのは、地域には循環がある、ということです。\n草を刈ることにより田んぼの生育が順調に進む。\nそういうことが代々受け継がれていく。\nそこに価値を感じて他の地域の人たちが混ざっていく。\nやり続けることで地域の人たちの受け入れ力も高まっていく。\n\n一つ一つに循環があり、また全体としての大きな循環がある。\n輪廻、というのでしょうかね。\nあるいは螺旋ということなのかもしれません。\n\nとにかく、何かと何かが繋がり合って循環することで、人間の生活は成り立っているのだということを、この歳になってようやく実感しています。\n都市で暮らす人たちが地域に関わる活動を行っていくことは、地域の人たち以上に都市住民にとって学びの多いことなのだろうと思います。\n個人としての営みを継続させていくとともに、同じような経験を周囲の人たちにも促していきたいなと思いました\n\n※イラストはChatGPTに描いてもらいました", "renban": 4, "date_iso": "2026-06-28"}];
 
@@ -383,12 +449,18 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 const recordsRef = db.ref('notelog/records');
 const settingsRef = db.ref('notelog/settings');
+// Shared with ささやきログ: the idea notebook lives under sasayakiLog/ideas.
+// We only ever touch this sub-path (never the parent sasayakiLog node) so
+// ささやきログ's issues/settings data is never overwritten from here.
+const ideasRef = db.ref('sasayakiLog/ideas');
 
 const DEFAULT_ILLUST_PROMPT = '以下の文章に合うイラストを横長（1280×670px）で作成ください。なお、文章において特に印象的なシーンに絞り、文字はなくイラストのみでお願いします。';
 let illustPrompt = DEFAULT_ILLUST_PROMPT;
 
 let records = [];
 let activeDetailId = null;
+let ideas = [];
+let ideaEditId = null;
 
 function parseRaw(text){
   const lines = text.replace(/\r\n/g,'\n').split('\n');
@@ -711,6 +783,162 @@ document.getElementById('openStats').addEventListener('click', () => {
   document.getElementById('statsBackdrop').classList.add('open');
 });
 
+/* ---------- ネタ帳（ささやきログと共有） ---------- */
+function uidIdea(){ return 'd' + Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+
+function fmtIdeaDateTime(ts){
+  if(!ts) return '';
+  const d = new Date(ts);
+  const w = ['日','月','火','水','木','金','土'][d.getDay()];
+  const hh = String(d.getHours()).padStart(2,'0');
+  const mm = String(d.getMinutes()).padStart(2,'0');
+  return `${d.getFullYear()}.${d.getMonth()+1}.${d.getDate()}(${w}) ${hh}:${mm}`;
+}
+
+function ideasSnapshotToArray(val){
+  if(!val) return [];
+  return Array.isArray(val) ? val.slice() : Object.values(val);
+}
+
+function getCurrentLocation(){
+  return new Promise((resolve) => {
+    if(!navigator.geolocation){ resolve(null); return; }
+    navigator.geolocation.getCurrentPosition(
+      pos => resolve({lat: pos.coords.latitude, lng: pos.coords.longitude}),
+      err => { console.warn('geolocation failed', err); resolve(null); },
+      {timeout: 8000, maximumAge: 60000}
+    );
+  });
+}
+
+async function reverseGeocodeMuni(lat, lng){
+  try{
+    const res = await fetch(`https://mreversegeocoder.gsi.go.jp/reverse-geocoder/LonLatToAddress?lat=${lat}&lon=${lng}`);
+    const data = await res.json();
+    const r = data && data.results;
+    if(r && r.lv01Nm) return r.lv01Nm.trim();
+    return null;
+  }catch(e){
+    console.warn('reverse geocode failed', e);
+    return null;
+  }
+}
+
+async function persistIdeas(){
+  try{
+    await ideasRef.set(ideas);
+  }catch(e){
+    console.error('ネタ帳の保存に失敗しました', e);
+    setSyncState('err', (e && (e.code || e.message)) || '不明なエラー');
+  }
+}
+
+function renderIdeaList(){
+  const wrap = document.getElementById('ideaList');
+  const list = ideas.slice().sort((a,b) => {
+    const au = a.used ? 1 : 0, bu = b.used ? 1 : 0;
+    if(au !== bu) return au - bu; // 未使用が先
+    return (b.createdAt||0) - (a.createdAt||0); // 新しい順
+  });
+  document.getElementById('ideaEmptyState').classList.toggle('hidden', ideas.length > 0);
+  wrap.innerHTML = list.map(idea => {
+    let locText;
+    if(idea.locationName) locText = idea.locationName;
+    else if(idea.locationFailed) locText = '位置情報なし';
+    else locText = '';
+    return `
+      <div class="idea-card${idea.used ? ' used' : ''}" data-id="${idea.id}">
+        <div class="idea-card-head">
+          <span class="idea-title">${escapeHtml(idea.title || '（無題）')}</span>
+          ${idea.used ? '<span class="idea-used-badge">使用済み</span>' : ''}
+        </div>
+        ${idea.content ? `<div class="idea-content">${escapeHtml(idea.content)}</div>` : ''}
+        <div class="idea-meta">${fmtIdeaDateTime(idea.createdAt)}${locText ? '　・　' + escapeHtml(locText) : ''}</div>
+        <div class="idea-actions">
+          <button type="button" class="btn btn-ghost" data-act="edit" data-id="${idea.id}">編集</button>
+          <button type="button" class="btn btn-ghost" data-act="toggleUsed" data-id="${idea.id}">${idea.used ? '未使用に戻す' : '使用済みにする'}</button>
+          <button type="button" class="btn btn-danger" data-act="del" data-id="${idea.id}">削除</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+document.getElementById('openIdeas').addEventListener('click', () => {
+  renderIdeaList();
+  document.getElementById('ideasBackdrop').classList.add('open');
+});
+
+document.getElementById('ideaSaveBtn').addEventListener('click', async () => {
+  const title = document.getElementById('ideaTitleInput').value.trim();
+  const content = document.getElementById('ideaContentInput').value.trim();
+  if(!title && !content){ alert('タイトルか内容を入力してください'); return; }
+
+  const btn = document.getElementById('ideaSaveBtn');
+  const statusEl = document.getElementById('ideaLocStatus');
+  const origLabel = btn.textContent;
+  btn.disabled = true; btn.textContent = '保存中…';
+  statusEl.textContent = '位置情報を取得中…';
+
+  const idea = {id: uidIdea(), title, content, createdAt: Date.now(), used: false, locationName: null, locationFailed: false};
+  const pos = await getCurrentLocation();
+  if(pos){
+    idea.lat = pos.lat; idea.lng = pos.lng;
+    const muni = await reverseGeocodeMuni(pos.lat, pos.lng);
+    idea.locationName = muni;
+    idea.locationFailed = !muni;
+  }else{
+    idea.locationFailed = true;
+  }
+
+  ideas.push(idea);
+  await persistIdeas();
+
+  document.getElementById('ideaTitleInput').value = '';
+  document.getElementById('ideaContentInput').value = '';
+  statusEl.textContent = '';
+  btn.disabled = false; btn.textContent = origLabel;
+  renderIdeaList();
+});
+
+document.getElementById('ideaList').addEventListener('click', async (e) => {
+  const btn = e.target.closest('button[data-act]');
+  if(!btn) return;
+  const id = btn.dataset.id;
+  const act = btn.dataset.act;
+  const idea = ideas.find(i => i.id === id);
+  if(!idea) return;
+
+  if(act === 'del'){
+    if(!confirm('このネタを削除しますか？元に戻せません。')) return;
+    ideas = ideas.filter(i => i.id !== id);
+    await persistIdeas();
+    renderIdeaList();
+  }
+  if(act === 'toggleUsed'){
+    idea.used = !idea.used;
+    idea.usedAt = idea.used ? Date.now() : null;
+    await persistIdeas();
+    renderIdeaList();
+  }
+  if(act === 'edit'){
+    ideaEditId = id;
+    document.getElementById('ideaEditTitle').value = idea.title || '';
+    document.getElementById('ideaEditContent').value = idea.content || '';
+    document.getElementById('ideaEditBackdrop').classList.add('open');
+  }
+});
+
+document.getElementById('ideaEditSaveBtn').addEventListener('click', async () => {
+  const idea = ideas.find(i => i.id === ideaEditId);
+  if(idea){
+    idea.title = document.getElementById('ideaEditTitle').value.trim();
+    idea.content = document.getElementById('ideaEditContent').value.trim();
+    await persistIdeas();
+    renderIdeaList();
+  }
+  closeModal('ideaEdit');
+});
+
 const IMPORT_BATCH_SIZE = 8;
 
 function chunk(arr, size){
@@ -830,6 +1058,14 @@ function ensureAuth(){
       }
     }, err => {
       console.error('settingsRef.on value error', err);
+    });
+
+    // Shared idea notebook (see ideasRef comment above).
+    ideasRef.on('value', snap => {
+      ideas = ideasSnapshotToArray(snap.val());
+      if(document.getElementById('ideasBackdrop').classList.contains('open')) renderIdeaList();
+    }, err => {
+      console.error('ideasRef.on value error', err);
     });
 
     await seedIfEmpty();
