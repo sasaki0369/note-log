@@ -568,7 +568,7 @@ function render(){
 
   document.getElementById('headerCount').textContent = records.length;
   document.getElementById('footCount').textContent = records.length;
-  document.getElementById('countTag').textContent = q || yr ? `${list.length} / ${records.length} 件` : `${records.length} 件`;
+  document.getElementById('countTag').textContent = (q || yr) ? `絞り込み ${list.length} 件` : '';
 
   const wrap = document.getElementById('listWrap');
   if(list.length === 0){
