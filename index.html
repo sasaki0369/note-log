@@ -396,6 +396,7 @@
   <div class="modal" style="max-width:640px;">
     <button class="modal-close" data-close="ideas">×</button>
     <h2>ネタ帳</h2>
+    <div class="idea-sync-status" id="ideaSyncStatus" style="font-size:11.5px;color:var(--ink-soft);margin-bottom:12px;"></div>
     <div class="idea-form">
       <div class="field">
         <label>タイトル</label>
@@ -407,6 +408,9 @@
       </div>
       <div class="idea-loc-status" id="ideaLocStatus"></div>
       <button type="button" class="btn btn-primary" id="ideaSaveBtn" style="width:100%;">💡 メモを保存</button>
+    </div>
+    <div style="display:flex;justify-content:flex-end;margin-bottom:8px;">
+      <button type="button" class="btn btn-ghost" id="ideaRefreshBtn" style="font-size:12px;padding:6px 12px;">🔄 再取得</button>
     </div>
     <div class="idea-list" id="ideaList"></div>
     <div class="idea-empty hidden" id="ideaEmptyState">まだネタがありません。思いついたらすぐメモしましょう。</div>
@@ -863,9 +867,37 @@ function renderIdeaList(){
   }).join('');
 }
 
+function setIdeaSyncStatus(text, isError){
+  const el = document.getElementById('ideaSyncStatus');
+  el.textContent = text;
+  el.style.color = isError ? 'var(--thread)' : 'var(--ink-soft)';
+}
+
+async function refreshIdeasFromFirebase(){
+  setIdeaSyncStatus('取得中…');
+  try{
+    const snap = await ideasRef.once('value');
+    ideas = ideasSnapshotToArray(snap.val());
+    renderIdeaList();
+    const now = new Date();
+    const hh = String(now.getHours()).padStart(2,'0');
+    const mm = String(now.getMinutes()).padStart(2,'0');
+    setIdeaSyncStatus(`最終取得: ${hh}:${mm}（${ideas.length}件）`);
+  }catch(e){
+    console.error('ネタ帳の取得に失敗しました', e);
+    renderIdeaList();
+    setIdeaSyncStatus(`取得エラー: ${(e && (e.code || e.message)) || '不明なエラー'}`, true);
+  }
+}
+
 document.getElementById('openIdeas').addEventListener('click', () => {
   renderIdeaList();
   document.getElementById('ideasBackdrop').classList.add('open');
+  refreshIdeasFromFirebase();
+});
+
+document.getElementById('ideaRefreshBtn').addEventListener('click', () => {
+  refreshIdeasFromFirebase();
 });
 
 document.getElementById('ideaSaveBtn').addEventListener('click', async () => {
@@ -1063,9 +1095,15 @@ function ensureAuth(){
     // Shared idea notebook (see ideasRef comment above).
     ideasRef.on('value', snap => {
       ideas = ideasSnapshotToArray(snap.val());
-      if(document.getElementById('ideasBackdrop').classList.contains('open')) renderIdeaList();
+      if(document.getElementById('ideasBackdrop').classList.contains('open')){
+        renderIdeaList();
+        setIdeaSyncStatus(`同期中（${ideas.length}件）`);
+      }
     }, err => {
       console.error('ideasRef.on value error', err);
+      if(document.getElementById('ideasBackdrop').classList.contains('open')){
+        setIdeaSyncStatus(`同期エラー: ${(err && (err.code || err.message)) || '不明なエラー'}`, true);
+      }
     });
 
     await seedIfEmpty();
