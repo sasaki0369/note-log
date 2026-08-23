@@ -1060,7 +1060,12 @@ document.getElementById('runImportBtn').addEventListener('click', async () => {
 document.querySelectorAll('[data-close]').forEach(btn => {
   btn.addEventListener('click', () => closeModal(btn.dataset.close));
 });
+// 入力を伴うモーダル（編集・ネタ編集・設定・取り込み・ネタ帳）は、誤って
+// 背景をタップしただけで内容が消えないよう、外側タップでは閉じない。
+// 閉じるのは読み取り専用の詳細・集計画面のみ。
+const OUTSIDE_TAP_CLOSABLE = new Set(['detailBackdrop', 'statsBackdrop']);
 document.querySelectorAll('.modal-backdrop').forEach(bd => {
+  if(!OUTSIDE_TAP_CLOSABLE.has(bd.id)) return;
   bd.addEventListener('click', (e) => { if(e.target === bd) bd.classList.remove('open'); });
 });
 
@@ -1092,13 +1097,11 @@ function ensureAuth(){
     document.getElementById('googleLoginBtn').addEventListener('click', () => {
       const provider = new firebase.auth.GoogleAuthProvider();
       document.getElementById('loginError').textContent = '';
-      firebase.auth().signInWithPopup(provider).catch(err => {
-        if(err && (err.code === 'auth/popup-blocked' || err.code === 'auth/cancelled-popup-request' || err.code === 'auth/operation-not-supported-in-this-environment')){
-          firebase.auth().signInWithRedirect(provider);
-        }else{
-          console.warn('Google sign-in failed', err);
-          document.getElementById('loginError').textContent = 'ログインに失敗しました（'+(err && err.code ? err.code : err)+'）';
-        }
+      document.getElementById('googleLoginBtn').textContent = 'ログイン画面へ移動しています…';
+      firebase.auth().signInWithRedirect(provider).catch(err => {
+        console.warn('Google sign-in failed', err);
+        document.getElementById('loginError').textContent = 'ログインに失敗しました（'+(err && err.code ? err.code : err)+'）';
+        document.getElementById('googleLoginBtn').textContent = 'Googleでログイン';
       });
     });
   });
