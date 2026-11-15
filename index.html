@@ -11,7 +11,11 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="noteろぐ">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Zen+Old+Mincho:wght@500;700&family=Zen+Maru+Gothic:wght@400;500;700&family=Shippori+Mincho:wght@600&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+<!-- フォントCSSは表示をブロックしないよう非同期で読み込む（読み込み前は代替フォントで即表示） -->
+<link href="https://fonts.googleapis.com/css2?family=Zen+Old+Mincho:wght@500;700&family=Zen+Maru+Gothic:wght@400;500;700&family=Shippori+Mincho:wght@600&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Zen+Old+Mincho:wght@500;700&family=Zen+Maru+Gothic:wght@400;500;700&family=Shippori+Mincho:wght@600&display=swap" rel="stylesheet"></noscript>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
@@ -540,16 +544,33 @@ function setSyncState(state, detail){
   else { label.textContent = '接続中…'; }
 }
 
-async function seedIfEmpty(){
-  const snap = await recordsRef.once('value');
-  if(!snap.exists()){
-    const updates = {};
-    SEED_DATA.forEach(r => {
-      const key = recordsRef.push().key;
-      updates[key] = {date: r.date, title: r.title, body: r.body};
-    });
-    await recordsRef.update(updates);
-  }
+// 初回のみ：データが空のときにサンプル記事を登録する。
+// （以前は全記事を .once で二重取得していたため、最初の value イベントの結果を流用する形に変更）
+async function seedRecords(){
+  const updates = {};
+  SEED_DATA.forEach(r => {
+    const key = recordsRef.push().key;
+    updates[key] = {date: r.date, title: r.title, body: r.body};
+  });
+  await recordsRef.update(updates);
+}
+
+// 前回取得した記事一覧を端末に保存しておき、起動直後にすぐ表示する（Firebaseの応答を待たない）。
+const RECORDS_CACHE_KEY = 'notelog_records_cache_v1';
+function loadRecordsCache(){
+  try{
+    const raw = localStorage.getItem(RECORDS_CACHE_KEY);
+    if(!raw) return null;
+    const arr = JSON.parse(raw);
+    return Array.isArray(arr) ? arr : null;
+  }catch(e){ return null; }
+}
+function saveRecordsCache(list){
+  try{
+    localStorage.setItem(RECORDS_CACHE_KEY, JSON.stringify(
+      list.map(r => ({id:r.id, date:r.date, title:r.title, body:r.body}))
+    ));
+  }catch(e){ /* 容量超過・プライベートモード等は無視（キャッシュなしで動作） */ }
 }
 
 function escapeHtml(s){
@@ -1115,12 +1136,26 @@ function ensureAuth(){
 (async function init(){
   try{
     setSyncState('connecting');
+
+    // 前回のデータがあれば認証・通信を待たずに先に表示する
+    const cached = loadRecordsCache();
+    if(cached && cached.length){
+      records = renumber(cached.map(r => ({id:r.id, date:r.date, title:r.title, body:r.body || ''})));
+      render();
+    }
+
     await ensureAuth();
 
+    let seedChecked = false;
     recordsRef.on('value', snap => {
       records = renumber(objectToArray(snap.val()));
       setSyncState('on');
       render();
+      saveRecordsCache(records);
+      if(!seedChecked){
+        seedChecked = true;
+        if(!snap.exists()) seedRecords().catch(e => console.error('seed failed', e));
+      }
     }, err => {
       console.error('recordsRef.on value error', err);
       setSyncState('err', (err && (err.code || err.message)) || '不明なエラー');
@@ -1157,7 +1192,6 @@ function ensureAuth(){
       }
     });
 
-    await seedIfEmpty();
   }catch(e){
     console.error('init failed', e);
     setSyncState('err', (e && (e.code || e.message)) || '不明なエラー');
