@@ -192,7 +192,10 @@
   .idea-used-badge{
     font-size:10.5px;background:var(--ink-soft);color:#fff;padding:1px 7px;border-radius:8px;
   }
-  .idea-content{font-size:13.5px;color:var(--ink-soft);line-height:1.7;white-space:pre-wrap;margin-bottom:6px;}
+  .idea-content{
+    font-size:13.5px;color:var(--ink-soft);line-height:1.7;white-space:pre-wrap;margin-bottom:6px;
+    display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;
+  }
   .idea-meta{font-size:11px;color:var(--ink-soft);margin-bottom:8px;}
   .idea-actions{display:flex;gap:6px;flex-wrap:wrap;}
   .idea-actions .btn{font-size:12px;padding:6px 10px;}
@@ -980,13 +983,15 @@ document.getElementById('ideaList').addEventListener('click', async (e) => {
 
 document.getElementById('ideaEditSaveBtn').addEventListener('click', async () => {
   const idea = ideas.find(i => i.id === ideaEditId);
+  const title = document.getElementById('ideaEditTitle').value.trim();
+  const content = document.getElementById('ideaEditContent').value.trim();
+  closeModal('ideaEdit');
   if(idea){
-    idea.title = document.getElementById('ideaEditTitle').value.trim();
-    idea.content = document.getElementById('ideaEditContent').value.trim();
+    idea.title = title;
+    idea.content = content;
     await persistIdeas();
     renderIdeaList();
   }
-  closeModal('ideaEdit');
 });
 
 const IMPORT_BATCH_SIZE = 8;
